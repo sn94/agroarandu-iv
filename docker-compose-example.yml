@@ -1,0 +1,41 @@
+networks:
+  web:
+    external: true
+
+services:
+  agroaranduiv:
+    image: nginx:1.27-alpine
+    container_name: agroaranduiv
+    restart: unless-stopped
+    depends_on: []
+    networks:
+      - web
+    volumes:
+      - ./www:/usr/share/nginx/html:ro
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=web
+      # Router HTTPS (principal)
+      - traefik.http.routers.agroaranduiv.rule=Host(`agroaranduiv.bareiroing.com`)
+      - traefik.http.routers.agroaranduiv.entrypoints=websecure
+      - traefik.http.routers.agroaranduiv.tls.certresolver=le
+
+      # Router HTTP -> redirección a HTTPS
+      - traefik.http.routers.agroaranduiv-http.rule=Host(`agroaranduiv.bareiroing.com`)
+      - traefik.http.routers.agroaranduiv-http.entrypoints=web
+      - traefik.http.routers.agroaranduiv-http.middlewares=agroaranduiv-https
+
+      # Middleware de redirección
+      - traefik.http.middlewares.agroaranduiv-https.redirectscheme.scheme=https
+      - traefik.http.middlewares.agroaranduiv-https.redirectscheme.permanent=true
+
+      # Puerto interno que expone Nginx
+      - traefik.http.services.agroaranduiv.loadbalancer.server.port=80
+
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s

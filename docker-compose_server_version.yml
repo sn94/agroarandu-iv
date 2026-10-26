@@ -12,6 +12,8 @@ services:
       - --providers.docker.exposedbydefault=false
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443
+      - --entrypoints.web.transport.respondingtimeouts.readtimeout=600s
+      - --entrypoints.websecure.transport.respondingtimeouts.readtimeout=600s
       - --certificatesresolvers.le.acme.httpchallenge=true
       - --certificatesresolvers.le.acme.httpchallenge.entrypoint=web
       - --certificatesresolvers.le.acme.email=postmaster@aksolutionspy.com
